@@ -1,6 +1,10 @@
 # Local Terraform directories
 .terraform/
 .terraform.lock.hcl
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
 
 # Terraform variable files that contain secrets
 *.tfvars
@@ -8,10 +12,6 @@
 
 # Terraform plan output files
 *.tfplan
-
-# Terraform state files (sensitive)
-*.tfstate
-*.tfstate.backup
 
 # Crash logs
 crash.log
