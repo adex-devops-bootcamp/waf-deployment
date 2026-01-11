@@ -30,5 +30,5 @@ output "sonarqube_url" {
 
 output "instance_public_ip" {
   description = "Public IP of bastion host"
-  value = aws_instance.Bastion.public_ip
+  value       = aws_instance.Bastion.public_ip
 }

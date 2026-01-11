@@ -35,7 +35,7 @@ variable "ec2_instance_type" {
 variable "ec2_key_name" {
   description = "SSH key pair name for EC2 instance"
   type        = string
-  default = "Riwaj-Key"
+  default     = "Riwaj-Key"
 }
 
 #########################################
@@ -58,7 +58,12 @@ variable "tags" {
   description = "Default tags applied to all resources"
   type        = map(string)
   default = {
-    Project     = "SonarQube"
-    ManagedBy   = "Terraform"
+    Project   = "SonarQube"
+    ManagedBy = "Terraform"
   }
+}
+
+variable "ec2_key_path" {
+  description = "Path to SSH private key"
+  type        = string
 }

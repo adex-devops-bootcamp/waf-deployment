@@ -1,6 +1,5 @@
-# ========================
 # VPC
-# ========================
+
 resource "aws_vpc" "sonar_vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -11,24 +10,22 @@ resource "aws_vpc" "sonar_vpc" {
   }
 }
 
-# ========================
 # PUBLIC SUBNETS
-# ========================
+
 resource "aws_subnet" "public" {
-  count                   = length(var.public_subnets)
+  count                   = length(var.public_subnets) # Number of public subnet will be created aws_subnet.public[0], aws_subnet.public[1]
   vpc_id                  = aws_vpc.sonar_vpc.id
-  cidr_block              = var.public_subnets[count.index]
-  availability_zone       = var.availability_zones[count.index]
+  cidr_block              = var.public_subnets[count.index]     # Assigning of CIDR according to index [0], [1]
+  availability_zone       = var.availability_zones[count.index] # Assigning of AZ according to index [0], [1]
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.environment}-public-subnet-${count.index + 1}"
+    Name = "${var.environment}-public-subnet-${count.index + 1}" # aws_subnet.public[0] --> dev-public-subnet-1
   }
 }
 
-# ========================
 # INTERNET GATEWAY
-# ========================
+
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.sonar_vpc.id
 
@@ -37,9 +34,8 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# ========================
 # PUBLIC ROUTE TABLE
-# ========================
+
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.sonar_vpc.id
 
@@ -54,14 +50,13 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table_association" "public_association" {
-  count          = length(aws_subnet.public)
+  count          = length(aws_subnet.public) # Multiple subnet association
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
-# ========================
+
 # NAT GATEWAY
-# ========================
 resource "aws_eip" "nat" {
   domain = "vpc"
 }
@@ -77,23 +72,22 @@ resource "aws_nat_gateway" "nat" {
   }
 }
 
-# ========================
 # PRIVATE SUBNETS
-# ========================
+
 resource "aws_subnet" "private" {
-  count             = length(var.private_subnets)
+  count             = length(var.private_subnets) # Number of private subnet will be created aws_subnet.private[0], aws_subnet.private[1]
   vpc_id            = aws_vpc.sonar_vpc.id
-  cidr_block        = var.private_subnets[count.index]
-  availability_zone = var.availability_zones[count.index]
+  cidr_block        = var.private_subnets[count.index]    # Assigning of CIDR according to index [0], [1]
+  availability_zone = var.availability_zones[count.index] # Assigning of AZ according to index [0], [1]
 
   tags = {
     Name = "${var.environment}-private-subnet-${count.index + 1}"
   }
 }
 
-# ========================
+
 # PRIVATE ROUTE TABLE
-# ========================
+
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.sonar_vpc.id
 
@@ -108,7 +102,7 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "private_association" {
-  count          = length(aws_subnet.private)
+  count          = length(aws_subnet.private) # Multiple subnet association
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }

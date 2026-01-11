@@ -6,3 +6,5 @@ private_subnets = ["10.0.11.0/24", "10.0.12.0/24"]
 availability_zones = ["us-east-1a", "us-east-1b"]
 
 ec2_key_name = "Riwaj-Key"
+
+ec2_key_path = "~/.ssh/Riwaj-Key.pem"
