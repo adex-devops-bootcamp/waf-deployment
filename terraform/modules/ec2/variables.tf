@@ -1,7 +1,7 @@
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "prod-sonarqube"
+  default     = "prod-firewall"
 }
 
 
@@ -9,8 +9,8 @@ variable "tags" {
   description = "Common resource tags"
   type        = map(string)
   default = {
-    Project     = "sonarqube"
-    Environment = "prod-sonarqube"
+    Project     = "firewall"
+    Environment = "prod-firewall"
     ManagedBy   = "terraform"
   }
 }

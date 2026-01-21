@@ -2,7 +2,7 @@
 # Security Group
 ############################
 
-resource "aws_security_group" "sonarqube" {
+resource "aws_security_group" "firewall" {
   name        = "${var.environment}-sg"
   description = "Security group for EC2 instance"
   vpc_id      = var.vpc_id

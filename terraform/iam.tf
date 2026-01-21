@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "ec2_assume_role" {
   }
 }
 
-resource "aws_iam_role" "sonarqube_ec2_role" {
+resource "aws_iam_role" "firewall_ec2_role" {
   name               = "${var.environment}-ec2-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 
@@ -31,13 +31,13 @@ resource "aws_iam_role" "sonarqube_ec2_role" {
 
 # SSM access (Session Manager)
 resource "aws_iam_role_policy_attachment" "ssm" {
-  role       = aws_iam_role.sonarqube_ec2_role.name
+  role       = aws_iam_role.firewall_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # CloudWatch logs & metrics
 resource "aws_iam_role_policy_attachment" "cloudwatch" {
-  role       = aws_iam_role.sonarqube_ec2_role.name
+  role       = aws_iam_role.firewall_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
@@ -45,7 +45,7 @@ resource "aws_iam_role_policy_attachment" "cloudwatch" {
 # Instance Profile
 ############################
 
-resource "aws_iam_instance_profile" "sonarqube" {
+resource "aws_iam_instance_profile" "firewall" {
   name = "${var.environment}-instance-profile"
-  role = aws_iam_role.sonarqube_ec2_role.name
+  role = aws_iam_role.firewall_ec2_role.name
 }

@@ -1,4 +1,4 @@
-name: Terraform Apply (Prod SonarQube)
+name: Terraform Apply (Prod firewall)
 
 on:
   workflow_dispatch:

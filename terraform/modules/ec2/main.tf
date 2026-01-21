@@ -26,7 +26,7 @@ resource "aws_instance" "this" {
   instance_type          = "t3.medium"
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.sg_id]
-  #   iam_instance_profile   = aws_iam_instance_profile.sonarqube.name
+  iam_instance_profile   = aws_iam_instance_profile.firewall.name
   key_name = var.key_name
 
   root_block_device {
