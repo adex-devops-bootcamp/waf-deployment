@@ -53,6 +53,7 @@ jobs:
           TF_VAR_ami_name_pattern: ${{ vars.AMI_NAME_PATTERN }}                           #vars ho hai   
           TF_VAR_ami_virtualization_type: ${{ vars.AMI_VIRTUALIZATION_TYPE }}             #vars ho hai
           TF_VAR_ami_architecture: ${{ vars.AMI_ARCHITECTURE }}                           #vars ho hai
+          TF_VAR_subnet_az: ${{ vars.SUBNET_AZ }}
 
           TF_VAR_tags: '{"Project":"ec2","Environment":"${{ inputs.working_directory }}","ManagedBy":"terraform","Owner":"Security-Team"}'
 
