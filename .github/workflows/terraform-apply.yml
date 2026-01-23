@@ -4,10 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       working_directory:
-        description: "Terraform working directory"
-        required: true
-        type: choice
-        options: [sonarqube, prometheus, prod]
+       description: "Terraform working directory"
+       required: true
 
       aws_access_key:
         description: "AWS Access Key"
@@ -33,27 +31,6 @@ on:
         description: "Root volume size (GB)"
         required: true
 
-      delete_on_termination:
-        description: "Delete volume on termination"
-        required: true
-        type: boolean
-
-      ami_owners:
-        description: "AMI owners (comma separated)"
-
-      ami_name_pattern:
-        description: "AMI name pattern"
-
-      ami_virtualization_type:
-        description: "AMI virtualization type"
-        required: true
-        default: "hvm"
-
-      ami_architecture:
-        description: "AMI architecture"
-        required: true
-        default: "x86_64"
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -76,12 +53,12 @@ jobs:
           TF_VAR_instance_type: ${{ inputs.instance_type }}
           TF_VAR_root_volume_type: ${{ inputs.root_volume_type }}
           TF_VAR_root_volume_size: "${{ inputs.root_volume_size }}"
-          TF_VAR_delete_on_termination: "${{ inputs.delete_on_termination }}"
+          TF_VAR_delete_on_termination: "${{ vars.DELETE_ON_TERMINATION }}"               #vars ho hai
 
-          TF_VAR_ami_owners: '["${{ inputs.ami_owners }}"]'
-          TF_VAR_ami_name_pattern: ${{ inputs.ami_name_pattern }}
-          TF_VAR_ami_virtualization_type: ${{ inputs.ami_virtualization_type }}
-          TF_VAR_ami_architecture: ${{ inputs.ami_architecture }}
+          TF_VAR_ami_owners: '["${{ vars.AMI_OWNERS }}"]'                                 #vars ho hai
+          TF_VAR_ami_name_pattern: ${{ vars.AMI_NAME_PATTERN }}                           #vars ho hai   
+          TF_VAR_ami_virtualization_type: ${{ vars.AMI_VIRTUALIZATION_TYPE }}             #vars ho hai
+          TF_VAR_ami_architecture: ${{ vars.AMI_ARCHITECTURE }}                           #vars ho hai
 
           TF_VAR_tags: '{"Project":"ec2","Environment":"${{ inputs.working_directory }}","ManagedBy":"terraform","Owner":"Security-Team"}'
 
