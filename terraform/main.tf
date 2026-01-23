@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "tf_state" {
-  bucket = "adex-terraform-states"
+  bucket = "adex-terraform-states-248628534734u56"
 }
 
 resource "aws_s3_bucket_versioning" "tf_state" {
