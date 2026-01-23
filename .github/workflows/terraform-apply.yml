@@ -45,8 +45,8 @@ jobs:
       - name: Terraform Apply
         working-directory: ./terraform/envs/${{ inputs.working_directory }}
         env:
-          TF_VAR_aws_access_key: ${{ inputs.aws_access_key }}
-          TF_VAR_aws_secret_key: ${{ inputs.aws_secret_key }}
+          TF_VAR_aws_access_key: ${{ secrets.aws_access_key }}
+          TF_VAR_aws_secret_key: ${{ secrets.aws_secret_key }}
           TF_VAR_aws_region: ${{ inputs.aws_region }}
 
           TF_VAR_environment: ${{ inputs.working_directory }}
