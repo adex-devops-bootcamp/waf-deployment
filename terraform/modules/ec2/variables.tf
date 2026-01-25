@@ -39,7 +39,7 @@ variable "tags" {
   type        = map(string)
 }
 
-variable "iam_instance_profile" {
+variable "iam_instance_profile_name" {
   description = "IAM instance profile name"
   type        = string
 }
