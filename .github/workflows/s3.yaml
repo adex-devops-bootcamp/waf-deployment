@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       working_directory:
-        description: "Terraform bootstrap directory (e.g. terraform/bootstrap/s3)"
+        description: "Terraform bootstrap directory"
         required: true
-        default: terraform/bootstrap/s3
+        default: terraform/
 
 jobs:
   terraform:
@@ -39,3 +39,5 @@ jobs:
       - name: Terraform Apply
         working-directory: ./${{ inputs.working_directory }}
         run: terraform apply -auto-approve
+
+

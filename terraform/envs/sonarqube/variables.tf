@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "us-east-1"
+  default = "eu-north-1"
 }
 
 variable "environment" {
@@ -25,7 +25,7 @@ variable "number_of_az" {
 variable "vpc_azs" {
   description = "Availability zone"
   type        = list(string)
-  default     = ["us-east-1"]
+  default     = ["eu-north-1a"]
 }
 
 variable "number_of_public_subnets" {
@@ -52,22 +52,26 @@ variable "private_subnets_cidr_block" {
   default     = []
 }
 
+variable "instance_type" {
+  type = string
+}
+
+variable "root_volume_type" {
+  type = string
+}
+
+variable "root_volume_size" {
+  type = number
+}
+
+variable "delete_on_termination" {
+  type = bool
+}
+
 variable "tags" {
-  description = "Common resource tags"
-  type        = map(string)
-  default = {
-    Project     = "firewall"
-    Environment = "prod-firewall"
-    ManagedBy   = "terraform"
-  }
+  type = map(string)
 }
-
-variable "ssh_allowed_cidr" {
-  description = "CIDR block allowed to SSH into EC2"
-  type        = string
-}
-
-variable "key_name" {
-  description = "EC2 key pair name"
-  type        = string
+variable "subnet_az" {
+  description = "Availability zones for subnets"
+  type        = list(string)
 }

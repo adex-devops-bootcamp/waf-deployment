@@ -1,18 +1,16 @@
-name: Terraform Apply (Prod firewall)
+name: Terraform Destroy (Prod firewall)
 
 on:
   workflow_dispatch:
     inputs:
       working_directory:
-       description: "Terraform working directory"
-       required: true
-
-
+        description: "Terraform working directory"
+        required: true
 
       aws_region:
         description: "AWS Region"
         required: true
-
+      
       instance_type:
         description: "EC2 instance type"
         required: true
@@ -30,35 +28,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repo
       - uses: actions/checkout@v4
 
+      # 2. Setup Terraform
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform Apply
+      # 3. Terraform Destroy
+      - name: Terraform Destroy
         working-directory: ./terraform/envs/${{ inputs.working_directory }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ inputs.aws_region }}
+          AWS_REGION: ${{ inputs.aws_region }}
 
           TF_VAR_environment: ${{ inputs.working_directory }}
           TF_VAR_instance_type: ${{ inputs.instance_type }}
           TF_VAR_root_volume_type: ${{ inputs.root_volume_type }}
           TF_VAR_root_volume_size: "${{ inputs.root_volume_size }}"
-          TF_VAR_delete_on_termination: "${{ vars.DELETE_ON_TERMINATION }}"               #vars ho hai
-
-          TF_VAR_ami_owners: '["${{ vars.AMI_OWNERS }}"]'                                 #vars ho hai
-          TF_VAR_ami_name_pattern: ${{ vars.AMI_NAME_PATTERN }}                           #vars ho hai   
-          TF_VAR_ami_virtualization_type: ${{ vars.AMI_VIRTUALIZATION_TYPE }}             #vars ho hai
-          TF_VAR_ami_architecture: ${{ vars.AMI_ARCHITECTURE }}                           #vars ho hai
+          TF_VAR_delete_on_termination: ${{ vars.DELETE_ON_TERMINATION }}
+          TF_VAR_ami_owners: '["${{ vars.AMI_OWNERS }}"]'
+          TF_VAR_ami_name_pattern: ${{ vars.AMI_NAME_PATTERN }}
+          TF_VAR_ami_virtualization_type: ${{ vars.AMI_VIRTUALIZATION_TYPE }}
+          TF_VAR_ami_architecture: ${{ vars.AMI_ARCHITECTURE }}
           TF_VAR_subnet_az: ${{ vars.SUBNET_AZ }}
-
           TF_VAR_tags: '{"Project":"ec2","Environment":"${{ inputs.working_directory }}","ManagedBy":"terraform","Owner":"Security-Team"}'
 
         run: |
           terraform init
           terraform validate
-          terraform plan
-          terraform apply -auto-approve
+          terraform destroy -auto-approve

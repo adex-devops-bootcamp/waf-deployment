@@ -27,7 +27,7 @@ Resources:
               - ec2:*
               - logs:*
             Resource: "*"
-          
+
           - Effect: Allow
             Action:
               - iam:GetRole
@@ -38,10 +38,16 @@ Resources:
               - iam:DetachRolePolicy
               - iam:PutRolePolicy
               - iam:DeleteRolePolicy
+              - iam:CreateInstanceProfile 
+              - iam:TagRole
+              - iam:ListRolePolicies
+              - iam:ListAttachedRolePolicies
               - iam:CreateInstanceProfile
+              - iam:DeleteInstanceProfile
               - iam:AddRoleToInstanceProfile
               - iam:RemoveRoleFromInstanceProfile
-              - iam:DeleteInstanceProfile
+              - iam:ListInstanceProfilesForRole
+              - iam:GetInstanceProfile
             Resource: "*"
 
           - Effect: Allow
@@ -53,7 +59,7 @@ Resources:
             Action:
               - sts:GetCallerIdentity
             Resource: "*"
-          
+
   TerraformAccessKey:
     Type: AWS::IAM::AccessKey
     Properties:
@@ -66,11 +72,13 @@ Resources:
       Description: Terraform IAM Credentials
       SecretString: !Sub |
         {
-        "AWS_ACCESS_KEY_ID": "${TerraformAccessKey}",
-        "AWS_SECRET_ACCESS_KEY": "${TerraformAccessKey.SecretAccessKey}"
+          "AWS_ACCESS_KEY_ID": "${TerraformAccessKey}",
+          "AWS_SECRET_ACCESS_KEY": "${TerraformAccessKey.SecretAccessKey}"
         }
+
 Outputs:
   TerraformUserName:
     Value: !Ref TerraformUser
+
   TerraformSecretName:
     Value: terraform/iam/Adex

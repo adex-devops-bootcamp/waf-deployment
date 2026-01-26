@@ -20,5 +20,5 @@ output "availability_zone" {
 
 output "ec2_eip" {
   description = "Elastic IP of EC2"
-  value       = aws_eip.this.public_ip
+  value       = aws_eip.firewall.public_ip
 }

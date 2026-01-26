@@ -9,11 +9,10 @@ variable "vpc_id" {
   type        = string
 }
 
-
-variable "ssh_allowed_cidr" {
-  description = "CIDR block allowed to SSH into EC2"
-  type        = string
-}
+#variable "ssh_allowed_cidr" {
+#  description = "CIDR block allowed to SSH into EC2"
+#  type        = string
+#}
 
 variable "tags" {
   description = "Common resource tags"

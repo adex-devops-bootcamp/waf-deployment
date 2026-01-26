@@ -1,33 +1,45 @@
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID"
+  type        = string
+}
+
+variable "sg_id" {
+  description = "Security group ID"
+  type        = string
+}
+
+
+variable "root_volume_type" {
+  description = "Root volume type"
+  type        = string
+}
+
+variable "root_volume_size" {
+  description = "Root volume size in GB"
+  type        = number
+}
+
+variable "delete_on_termination" {
+  description = "Delete root volume on termination"
+  type        = bool
+}
+
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "prod-firewall"
 }
-
 
 variable "tags" {
-  description = "Common resource tags"
+  description = "Tags"
   type        = map(string)
-  default = {
-    Project     = "firewall"
-    Environment = "prod-firewall"
-    ManagedBy   = "terraform"
-  }
 }
 
-
-variable "subnet_id" {
-  description = "Subnet ID where EC2 instance will be launched"
+variable "iam_instance_profile_name" {
+  description = "IAM instance profile name"
   type        = string
-}
-
-
-variable "sg_id" {
-  type = string
-  description = "Security Group ID where the web server will be deployed"
-}
-
-variable "key_name" {
-  type        = string
-  description = "EC2 key pair name"
 }

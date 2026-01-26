@@ -3,13 +3,12 @@ output "vpc_id" {
   value       = aws_vpc.vpc.id
 }
 
-output "public_subnets" {
-  description = "List of subnet id of public subnets"
-  value       = module.public_subnets.subnets_id
+output "public_subnet_ids" {
+  description = "IDs of all public subnets"
+  value       = module.public_subnets.subnet_ids
 }
 
-output "private_subnets" {
-  description = "List of subnet id of private subnets"
-  value       = module.private_subnets.subnets_id
+output "private_subnet_ids" {
+  description = "IDs of all private subnets"
+  value       = module.private_subnets.subnet_ids
 }
-
