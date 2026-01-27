@@ -75,3 +75,8 @@ variable "subnet_az" {
   description = "Availability zones for subnets"
   type        = list(string)
 }
+
+variable "zone_id" {
+  description = "Hosted Zone ID"
+  type = string
+}

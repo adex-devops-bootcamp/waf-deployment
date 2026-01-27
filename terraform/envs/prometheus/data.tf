@@ -7,3 +7,7 @@ data "terraform_remote_state" "sonarqube" {
     region = "eu-north-1"
   }
 }
+
+data "aws_route53_zone" "dns" {
+  zone_id = var.zone_id 
+}
