@@ -1,0 +1,74 @@
+name: Terraform Apply (vpc)
+
+on:
+  workflow_dispatch:
+    inputs:
+      working_directory:
+       description: "Terraform working directory"
+       required: true
+       
+      aws_region:
+        description: "AWS Region"
+        required: true
+
+      vpc_cidr:
+        description: "VPC CIDR block"
+        required: true
+
+      number_of_az:
+        description: "Number of Availability Zones"
+        required: true
+
+      vpc_azs:
+        description: "List of Availability Zones (JSON array)"
+        required: true
+
+      number_of_public_subnets:
+        description: "Number of public subnets"
+        required: true
+
+      public_subnets_cidr_block:
+        description: "Public subnet CIDR blocks (JSON array)"
+        required: true
+
+      number_of_private_subnets:
+        description: "Number of private subnets"
+        required: true
+
+      private_subnets_cidr_block:
+        description: "Private subnet CIDR blocks (JSON array)"
+        required: true   
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Apply
+        working-directory: ./terraform/envs/${{ inputs.working_directory }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ inputs.aws_region }}
+
+          TF_VAR_environment: ${{ inputs.working_directory }}
+          TF_VAR_vpc_cidr: ${{ inputs.vpc_cidr }}
+          TF_VAR_number_of_az: ${{ inputs.number_of_az }}
+          TF_VAR_vpc_azs: ${{ inputs.vpc_azs }}
+          TF_VAR_number_of_public_subnets: ${{ inputs.number_of_public_subnets }}
+          TF_VAR_public_subnets_cidr_block: ${{ inputs.public_subnets_cidr_block }}
+          TF_VAR_number_of_private_subnets: ${{ inputs.number_of_private_subnets }}
+          TF_VAR_private_subnets_cidr_block: ${{ inputs.private_subnets_cidr_block }}
+          TF_VAR_tags: '{"Project":"vpc","Environment":"${{ inputs.working_directory }}","ManagedBy":"terraform","Owner":"Security-Team"}'
+
+        run: |
+          terraform init
+          terraform validate
+          terraform plan
+          terraform apply -auto-approve
