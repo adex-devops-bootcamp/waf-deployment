@@ -61,6 +61,8 @@ Resources:
               - route53:GetHostedZone
               - route53:ListResourceRecordSets
               - route53:ChangeResourceRecordSets
+              - route53:ListTagsForResource
+
             Resource: "*"
 
           - Effect: Allow
