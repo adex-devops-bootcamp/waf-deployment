@@ -54,11 +54,6 @@ Resources:
             Action:
               - s3:*
             Resource: "*"
-            
-          - Effect: Allow
-            Action:
-              - s3:*
-            Resource: "*"
 
           - Effect: Allow
             Action:
