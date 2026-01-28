@@ -4,10 +4,6 @@ resource "aws_route53_record" "prometheus" {
   type    = "A"
   ttl     = 60
   records = [module.ec2.public_ip]
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 
