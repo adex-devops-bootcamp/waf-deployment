@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: IAM User for running Infrastructure as Code (Terraform)
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM User and Policy for Terraform
 
 Parameters:
   TerraformUserName:
@@ -38,16 +38,15 @@ Resources:
               - iam:DetachRolePolicy
               - iam:PutRolePolicy
               - iam:DeleteRolePolicy
-              - iam:CreateInstanceProfile 
-              - iam:TagRole
-              - iam:ListRolePolicies
-              - iam:ListAttachedRolePolicies
               - iam:CreateInstanceProfile
               - iam:DeleteInstanceProfile
               - iam:AddRoleToInstanceProfile
               - iam:RemoveRoleFromInstanceProfile
               - iam:ListInstanceProfilesForRole
               - iam:GetInstanceProfile
+              - iam:ListRolePolicies
+              - iam:ListAttachedRolePolicies
+              - iam:TagRole
             Resource: "*"
 
           - Effect: Allow
@@ -60,25 +59,8 @@ Resources:
               - sts:GetCallerIdentity
             Resource: "*"
 
-  TerraformAccessKey:
-    Type: AWS::IAM::AccessKey
-    Properties:
-      UserName: !Ref TerraformUser
-
-  TerraformSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: terraform/iam/Adex
-      Description: Terraform IAM Credentials
-      SecretString: !Sub |
-        {
-          "AWS_ACCESS_KEY_ID": "${TerraformAccessKey}",
-          "AWS_SECRET_ACCESS_KEY": "${TerraformAccessKey.SecretAccessKey}"
-        }
-
 Outputs:
   TerraformUserName:
     Value: !Ref TerraformUser
-
-  TerraformSecretName:
-    Value: terraform/iam/Adex
+    Export:
+      Name: TerraformUserName
