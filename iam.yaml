@@ -62,6 +62,9 @@ Resources:
               - route53:ListResourceRecordSets
               - route53:ChangeResourceRecordSets
               - route53:ListTagsForResource
+              - route53:GetChange
+              - route53:CreateHostedZone
+              - route53:DeleteHostedZone
 
             Resource: "*"
 
