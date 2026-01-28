@@ -61,9 +61,8 @@ Resources:
               - route53:ListResourceRecordSets
               - route53:ChangeResourceRecordSets
               - route53:ListTagsForResource
-
             Resource: "*"
-
+            
           - Effect: Allow
             Action:
               - sts:GetCallerIdentity
