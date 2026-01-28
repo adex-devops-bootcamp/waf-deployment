@@ -61,13 +61,10 @@ Resources:
               - route53:ListResourceRecordSets
               - route53:ChangeResourceRecordSets
               - route53:ListTagsForResource
-<<<<<<< HEAD:terraform-user.yaml
-=======
               - route53:GetChange
               - route53:CreateHostedZone
               - route53:DeleteHostedZone
 
->>>>>>> 5a705e44e9fc6b2ab8f2890d51ee2887895b0a20:iam.yaml
             Resource: "*"
             
           - Effect: Allow
