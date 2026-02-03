@@ -13,7 +13,7 @@ module "vpc" {
   # Public subnets
   number_of_public_subnets  = var.number_of_public_subnets
   public_subnets_cidr_block = var.public_subnets_cidr_block
-  
+
 
   # Private subnets
   number_of_private_subnets  = var.number_of_private_subnets
@@ -29,12 +29,6 @@ module "sg" {
   tags = var.tags
 
   ingress_rules = [
-    {
-      from_port   = 80
-      to_port     = 80
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
     {
       from_port   = 443
       to_port     = 443
