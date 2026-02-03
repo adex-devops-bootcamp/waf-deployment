@@ -23,6 +23,30 @@ resource "aws_security_group" "firewall" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+   ingress {
+    description = "Kibana"
+    from_port   = 5601
+    to_port     = 5601
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+   ingress {
+    description = "es http"
+    from_port   = 9200
+    to_port     = 9200
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+   ingress {
+    description = "Logstash"
+    from_port   = 5044
+    to_port     = 5044
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 # Need to define egress not created by default!!!
  egress {
     from_port   = 0
