@@ -2,7 +2,7 @@ module "sg" {
   source      = "../../modules/sg"
   name        = "${var.environment}-sg"
   description = "Allow http and https"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   tags = var.tags
 
   ingress_rules = [
