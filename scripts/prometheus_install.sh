@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 #----------------------------
 # Update system
@@ -43,8 +43,8 @@ promtool --version
 # Create Prometheus system group and user
 #----------------------------
 echo "Creating Prometheus user and group..."
-sudo groupadd --system prometheus || true
-sudo useradd -s /sbin/nologin --system -g prometheus prometheus || true
+sudo groupadd --system prometheus 
+sudo useradd -s /sbin/nologin --system -g prometheus prometheus 
 
 #----------------------------
 # Set permissions

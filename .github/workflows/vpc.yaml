@@ -10,34 +10,42 @@ on:
       aws_region:
         description: "AWS Region"
         required: true
+        default: "us-north-1"
 
       vpc_cidr:
         description: "VPC CIDR block"
         required: true
+        default: "10.0.0.0/16"
 
       number_of_az:
         description: "Number of Availability Zones"
         required: true
+        default: 1
 
       vpc_azs:
-        description: "List of Availability Zones (JSON array)"
+        description: "List of Availability Zones (List of Strings)"
         required: true
+        default: ["us-north-1a"]
 
       number_of_public_subnets:
         description: "Number of public subnets"
         required: true
+        default: 1
 
       public_subnets_cidr_block:
-        description: "Public subnet CIDR blocks (JSON array)"
+        description: "Public subnet CIDR blocks (List of Strings)"
         required: true
+        default: ["10.0.0.0/28"]
 
       number_of_private_subnets:
         description: "Number of private subnets"
         required: true
+        default: 0
 
       private_subnets_cidr_block:
         description: "Private subnet CIDR blocks (JSON array)"
         required: true   
+        default: []
 
 jobs:
   terraform:
