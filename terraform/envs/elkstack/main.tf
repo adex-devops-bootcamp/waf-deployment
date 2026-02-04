@@ -1,5 +1,5 @@
 module "sg" {
-  source      = "./modules/sg"
+  source      = "../../modules/sg"
   name        = "${var.environment}-sg"
   description = "Allow http and https"
   vpc_id      = module.vpc.vpc_id
