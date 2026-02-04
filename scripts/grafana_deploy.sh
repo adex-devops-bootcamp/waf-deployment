@@ -39,10 +39,10 @@ sudo apt-get update
 
 
 #----------------------------
-# To install Grafana
+# To install Grafana OSS
 #----------------------------
 echo "Installing Grafana"
-sudo apt-get install grafana-enterprise -y
+sudo apt-get install grafana -y
 
 
 
