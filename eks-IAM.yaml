@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  IAM setup for Amazon EKS with existing IAM user
+
+Parameters:
+  ExistingEksUserArn:
+    Type: String
+    Description: ARN of the existing IAM user who deploys EKS using Terraform
+
+Resources:
+
+  ######################################
+  # EKS CLUSTER ROLE (CONTROL PLANE)
+  ######################################
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-cluster-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+  ######################################
+  # EKS NODE ROLE (WORKER NODES)
+  ######################################
+  EKSNodeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-node-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+  ######################################
+  # EKS DEPLOYER ROLE (TERRAFORM)
+  ######################################
+  EKSDeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-deployer-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref ExistingEksUserArn
+            Action: sts:AssumeRole
+
+  ######################################
+  # EKS DEPLOYER POLICY (INFRA ONLY)
+  ######################################
+  EKSDeployerPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: eks-deployer-policy
+      Roles:
+        - !Ref EKSDeployerRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - eks:CreateCluster
+              - eks:DeleteCluster
+              - eks:DescribeCluster
+              - eks:UpdateClusterConfig
+              - eks:CreateNodegroup
+              - eks:DeleteNodegroup
+              - eks:DescribeNodegroup
+              - eks:UpdateNodegroupConfig
+              - eks:List*
+              - eks:CreateAccessEntry
+              - eks:AssociateAccessPolicy
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - ec2:Describe*
+              - ec2:CreateSecurityGroup
+              - ec2:DeleteSecurityGroup
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:RevokeSecurityGroupIngress
+              - ec2:CreateTags
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - autoscaling:CreateAutoScalingGroup
+              - autoscaling:DeleteAutoScalingGroup
+              - autoscaling:UpdateAutoScalingGroup
+              - autoscaling:Describe*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:DescribeLogGroups
+              - logs:PutRetentionPolicy
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:AttachRolePolicy
+              - iam:DetachRolePolicy
+              - iam:GetRole
+              - iam:ListRoles
+            Resource: "*"
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource:
+              - !GetAtt EKSClusterRole.Arn
+              - !GetAtt EKSNodeRole.Arn
+
+  ######################################
+  # USER -> ASSUME DEPLOYER ROLE
+  ######################################
+  AllowUserToAssumeDeployerRole:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: allow-assume-eks-deployer-role
+      Users:
+        - !Ref ExistingEksUserArn
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Resource: !GetAtt EKSDeployerRole.Arn
+
+  ######################################
+  # EKS ADMIN ROLE (kubectl access)
+  ######################################
+  EKSAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-admin-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref ExistingEksUserArn
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSAdminPolicy
+
+Outputs:
+  DeployerRoleArn:
+    Value: !GetAtt EKSDeployerRole.Arn
+    Description: Terraform assumes this role to create EKS
+
+  AdminRoleArn:
+    Value: !GetAtt EKSAdminRole.Arn
+    Description: Role used for kubectl access
