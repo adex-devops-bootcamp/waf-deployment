@@ -140,18 +140,20 @@ Resources:
       UserName: !Ref EKSAdminUser
       # Serial: 1   # <- uncomment & increment to force rotation of keys
 
+  TerraformSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: terraform/iam/Adex
+      Description: Terraform IAM Credentials
+      SecretString: !Sub |
+        {
+          "CLUSTER_ADMIN_AWS_ACCESS_KEY_ID": "${EKSUserAccessKey}",
+          "CLUSTER_ADMIN_AWS_SECRET_ACCESS_KEY": "${EKSUserAccessKey.SecretAccessKey}"
+        }
 Outputs:
   IAMUserName:
     Description: Name of the created IAM user
     Value: !Ref EKSAdminUser
-
-  AccessKeyId:
-    Description: Access Key ID (use only in safe/testing environments!)
-    Value: !Ref EKSUserAccessKey
-
-  SecretAccessKey:
-    Description: Secret Access Key — NEVER commit/share this value!
-    Value: !GetAtt EKSUserAccessKey.SecretAccessKey
 
   PolicyArn:
     Description: ARN of the attached custom policy
