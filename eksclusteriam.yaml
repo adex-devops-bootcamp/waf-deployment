@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  IAM setup for EKS full access: custom policy + IAM user + access keys.
+  WARNING: Exposing access keys in stack outputs is insecure for production.
+  Prefer using Secrets Manager or manual key creation/rotation.
+
+Parameters:
+  UserName:
+    Type: String
+    Default: EKSAdminUser
+    Description: Name of the IAM user to create
+
+Resources:
+  # ────────────────────────────────────────────────
+  # Custom managed-like policy 
+  # ────────────────────────────────────────────────
+  EKSFullAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: EKS-Full-Access-Policy
+      Description: Broad permissions for EKS automation/admin (after deduplication)
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: eks:*
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:GetRole
+              - iam:ListRoles
+              - iam:CreatePolicy
+              - iam:DeletePolicy
+              - iam:GetPolicy
+              - iam:AttachRolePolicy
+              - iam:DetachRolePolicy
+              - iam:PutRolePolicy
+              - iam:DeleteRolePolicy
+            Resource: "*"
+
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*-cluster-role'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*-node-role'
+
+          - Effect: Allow
+            Action:
+              - ec2:CreateSecurityGroup
+              - ec2:DeleteSecurityGroup
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:AuthorizeSecurityGroupEgress
+              - ec2:RevokeSecurityGroupIngress
+              - ec2:RevokeSecurityGroupEgress
+              - ec2:Describe*
+              - ec2:CreateTags
+              - ec2:DeleteTags
+              - ec2:CreateVpc
+              - ec2:DeleteVpc
+              - ec2:ModifyVpcAttribute
+              - ec2:CreateSubnet
+              - ec2:DeleteSubnet
+              - ec2:ModifySubnetAttribute
+              - ec2:CreateRouteTable
+              - ec2:DeleteRouteTable
+              - ec2:AssociateRouteTable
+              - ec2:DisassociateRouteTable
+              - ec2:CreateInternetGateway
+              - ec2:DeleteInternetGateway
+              - ec2:AttachInternetGateway
+              - ec2:DetachInternetGateway
+              - ec2:CreateNatGateway
+              - ec2:DeleteNatGateway
+              - ec2:CreateNetworkAcl
+              - ec2:DeleteNetworkAcl
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - autoscaling:CreateAutoScalingGroup
+              - autoscaling:UpdateAutoScalingGroup
+              - autoscaling:DeleteAutoScalingGroup
+              - autoscaling:Describe*
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:CreateLoadBalancer
+              - elasticloadbalancing:DeleteLoadBalancer
+              - elasticloadbalancing:Describe*
+              - elasticloadbalancing:ModifyLoadBalancerAttributes
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:DeleteLogGroup
+              - logs:DescribeLogGroups
+              - logs:PutRetentionPolicy
+            Resource: "*"
+
+          - Effect: Allow
+            Action: sts:GetCallerIdentity
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+            Resource: "*"
+
+  # ────────────────────────────────────────────────
+  # IAM User
+  # ────────────────────────────────────────────────
+  EKSAdminUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref UserName
+      Tags:
+        - Key: Purpose
+          Value: EKS Automation/Admin
+
+  # Attach the custom policy to the user (inline style via AWS::IAM::UserPolicy)
+  AttachEKSFullPolicyToUser:
+    Type: AWS::IAM::UserPolicy
+    Properties:
+      UserName: !Ref EKSAdminUser
+      PolicyName: EKS-Full-Access-Attached
+      PolicyDocument: !GetAtt EKSFullAccessPolicy.PolicyDocument
+
+  # ────────────────────────────────────────────────
+  # Access Key for the user
+  # ────────────────────────────────────────────────
+  EKSUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref EKSAdminUser
+      # Serial: 1   # <- uncomment & increment to force rotation of keys
+
+Outputs:
+  IAMUserName:
+    Description: Name of the created IAM user
+    Value: !Ref EKSAdminUser
+
+  AccessKeyId:
+    Description: Access Key ID (use only in safe/testing environments!)
+    Value: !Ref EKSUserAccessKey
+
+  SecretAccessKey:
+    Description: Secret Access Key — NEVER commit/share this value!
+    Value: !GetAtt EKSUserAccessKey.SecretAccessKey
+
+  PolicyArn:
+    Description: ARN of the attached custom policy
+    Value: !Ref EKSFullAccessPolicy
