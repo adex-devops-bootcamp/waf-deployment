@@ -1,62 +1,118 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  IAM setup for EKS full access: custom policy + IAM user + access keys.
-  WARNING: Exposing access keys in stack outputs is insecure for production.
-  Prefer using Secrets Manager or manual key creation/rotation.
+  Least-privilege IAM setup for EKS Cluster Admin (Terraform).
+  This user provisions EKS, VPC, nodes, addons.
+  Not for kubectl usage.
 
 Parameters:
-  UserName:
+  ClusterAdminUserName:
     Type: String
-    Default: EKSAdminUser
-    Description: Name of the IAM user to create
+    Default: ClusterAdminUser
+    Description: IAM user for EKS infrastructure provisioning
+  EKSUserName:
+    Type: String
+    Default: EKSUser
+    Description: IAM user allowed to access kubectl
 
 Resources:
   # ────────────────────────────────────────────────
-  # Custom managed-like policy 
+  # IAM USER (cluster admin user)
   # ────────────────────────────────────────────────
-  EKSFullAccessPolicy:
-    Type: AWS::IAM::Policy
+  ClusterAdminUser:
+    Type: AWS::IAM::User
     Properties:
-      PolicyName: EKS-Full-Access-Policy
-      PolicyDocument:
+      UserName: !Ref ClusterAdminUserName
+      Tags:
+        - Key: Purpose
+          Value: Assume EKS Cluster Admin Role
+
+  # ────────────────────────────────────────────────
+  # IAM USER (eks user - for kubectl)
+  # ────────────────────────────────────────────────
+  EKSUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref EKSUserName
+      Tags:
+        - Key: Purpose
+          Value: Access kubectl
+
+  # ────────────────────────────────────────────────
+  # IAM ROLE (assumed by ClusterAdminUser)
+  # ────────────────────────────────────────────────
+  ClusterAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-cluster-admin-role
+      AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
-            Action: eks:*
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:user/${ClusterAdminUserName}'
+            Action: sts:AssumeRole
+      Tags:
+        - Key: Purpose
+          Value: EKS Cluster Provisioning (Terraform)
+
+  # ────────────────────────────────────────────────
+  # LEAST-PRIVILEGE POLICY (attached to the role)
+  # ────────────────────────────────────────────────
+  ClusterAdminPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: EKS-Cluster-Admin-Least-Privilege
+      Roles:
+        - !Ref ClusterAdminRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+
+          # ──────── EKS CONTROL PLANE & ADDONS ────────
+          - Effect: Allow
+            Action:
+              - eks:CreateCluster
+              - eks:DeleteCluster
+              - eks:DescribeCluster
+              - eks:ListClusters
+              - eks:UpdateClusterConfig
+              - eks:UpdateClusterVersion
+              - eks:CreateAddon
+              - eks:UpdateAddon
+              - eks:DeleteAddon
+              - eks:DescribeAddon
+              - eks:ListAddons
             Resource: "*"
 
+          # ──────── IAM (SCOPED ROLE MANAGEMENT) ────────
           - Effect: Allow
             Action:
               - iam:CreateRole
               - iam:DeleteRole
               - iam:GetRole
-              - iam:ListRoles
-              - iam:CreatePolicy
-              - iam:DeletePolicy
-              - iam:GetPolicy
               - iam:AttachRolePolicy
               - iam:DetachRolePolicy
               - iam:PutRolePolicy
               - iam:DeleteRolePolicy
-            Resource: "*"
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*-cluster-role'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*-node-role'
 
+          # ──────── iam:PassRole (CRITICAL CONDITION) ────────
           - Effect: Allow
             Action: iam:PassRole
             Resource:
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*-cluster-role'
               - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*-node-role'
+            Condition:
+              StringLike:
+                iam:PassedToService:
+                  - eks.amazonaws.com
+                  - ec2.amazonaws.com
 
+          # ──────── EC2 / VPC / NETWORKING ────────
           - Effect: Allow
             Action:
-              - ec2:CreateSecurityGroup
-              - ec2:DeleteSecurityGroup
-              - ec2:AuthorizeSecurityGroupIngress
-              - ec2:AuthorizeSecurityGroupEgress
-              - ec2:RevokeSecurityGroupIngress
-              - ec2:RevokeSecurityGroupEgress
-              - ec2:Describe*
-              - ec2:CreateTags
-              - ec2:DeleteTags
               - ec2:CreateVpc
               - ec2:DeleteVpc
               - ec2:ModifyVpcAttribute
@@ -67,32 +123,32 @@ Resources:
               - ec2:DeleteRouteTable
               - ec2:AssociateRouteTable
               - ec2:DisassociateRouteTable
+              - ec2:CreateRoute
               - ec2:CreateInternetGateway
-              - ec2:DeleteInternetGateway
               - ec2:AttachInternetGateway
               - ec2:DetachInternetGateway
-              - ec2:CreateNatGateway
-              - ec2:DeleteNatGateway
-              - ec2:CreateNetworkAcl
-              - ec2:DeleteNetworkAcl
+              - ec2:DeleteInternetGateway
+              - ec2:CreateSecurityGroup
+              - ec2:DeleteSecurityGroup
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:AuthorizeSecurityGroupEgress
+              - ec2:RevokeSecurityGroupIngress
+              - ec2:RevokeSecurityGroupEgress
+              - ec2:Describe*
+              - ec2:CreateTags
+              - ec2:DeleteTags
             Resource: "*"
 
+          # ──────── AUTO SCALING (SELF-MANAGED NODES) ────────
           - Effect: Allow
             Action:
               - autoscaling:CreateAutoScalingGroup
               - autoscaling:UpdateAutoScalingGroup
               - autoscaling:DeleteAutoScalingGroup
-              - autoscaling:Describe*
+              - autoscaling:DescribeAutoScalingGroups
             Resource: "*"
 
-          - Effect: Allow
-            Action:
-              - elasticloadbalancing:CreateLoadBalancer
-              - elasticloadbalancing:DeleteLoadBalancer
-              - elasticloadbalancing:Describe*
-              - elasticloadbalancing:ModifyLoadBalancerAttributes
-            Resource: "*"
-
+          # ──────── CLOUDWATCH LOGS (EKS LOGGING) ────────
           - Effect: Allow
             Action:
               - logs:CreateLogGroup
@@ -101,59 +157,81 @@ Resources:
               - logs:PutRetentionPolicy
             Resource: "*"
 
+          # ──────── STS (IDENTITY CHECK) ────────
           - Effect: Allow
             Action: sts:GetCallerIdentity
             Resource: "*"
-
+        
+         # ──────── S3 (terraform.tfstate file) ────────
           - Effect: Allow
             Action:
-              - s3:PutObject
               - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Condition:
+              StringLike:
+                s3:prefix:
+                  - "eks/*"     
             Resource: "*"
 
   # ────────────────────────────────────────────────
-  # IAM User
+  # ALLOW cluster admin TO ASSUME cluster admin role
   # ────────────────────────────────────────────────
-  EKSAdminUser:
-    Type: AWS::IAM::User
+  AllowUserAssumeRolePolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      UserName: !Ref UserName
-      Tags:
-        - Key: Purpose
-          Value: EKS Automation/Admin
-
-  # Attach the custom policy to the user (inline style via AWS::IAM::UserPolicy)
-  AttachEKSFullPolicyToUser:
-    Type: AWS::IAM::UserPolicy
-    Properties:
-      UserName: !Ref EKSAdminUser
-      PolicyName: EKS-Full-Access-Attached
-      PolicyDocument: !GetAtt EKSFullAccessPolicy.PolicyDocument
+      PolicyName: Allow-Assume-EKS-ClusterAdmin-Role
+      Users:
+        - !Ref ClusterAdminUser
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Resource: !GetAtt ClusterAdminRole.Arn
 
   # ────────────────────────────────────────────────
-  # Access Key for the user
+  # Access Keys (stored in Secrets Manager)
   # ────────────────────────────────────────────────
+  ClusterAdminUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref ClusterAdminUser
+
   EKSUserAccessKey:
     Type: AWS::IAM::AccessKey
     Properties:
-      UserName: !Ref EKSAdminUser
-      # Serial: 1   # <- uncomment & increment to force rotation of keys
+      UserName: !Ref EKSUser
 
   TerraformSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: terraform/iam/Adex
-      Description: Terraform IAM Credentials
+      Name: terraform/iam/cluster-admin
+      Description: Cluster Admin credentials for Terraform
       SecretString: !Sub |
         {
-          "CLUSTER_ADMIN_AWS_ACCESS_KEY_ID": "${EKSUserAccessKey}",
-          "CLUSTER_ADMIN_AWS_SECRET_ACCESS_KEY": "${EKSUserAccessKey.SecretAccessKey}"
+          "CLUSTER_ADMIN_AWS_ACCESS_KEY_ID": "${ClusterAdminUserAccessKey}",
+          "CLUSTER_ADMIN_AWS_SECRET_ACCESS_KEY": "${ClusterAdminUserAccessKey.SecretAccessKey}",
+          "EKS_USER_AWS_ACCESS_KEY_ID": "${EKSUserAccessKey}",
+          "EKS_USER_AWS_SECRET_ACCESS_KEY": "${EKSUserAccessKey.SecretAccessKey}"
         }
-Outputs:
-  IAMUserName:
-    Description: Name of the created IAM user
-    Value: !Ref EKSAdminUser
 
-  PolicyArn:
-    Description: ARN of the attached custom policy
-    Value: !Ref EKSFullAccessPolicy
+Outputs:
+  ClusterAdminUser:
+    Description: IAM user (cluster admin)
+    Value: !Ref ClusterAdminUser
+  ClusterAdminArn:
+    Description: Arn of cluster admin user
+    Value: !GetAtt ClusterAdminUser.Arn
+  ClusterAdminRoleArn:
+    Description: Arn of cluster admin role
+    Value: !GetAtt ClusterAdminRole.Arn
+  ClusterAdminPolicyArn:
+    Description: Arn of cluster admin policy
+    Value: !Ref ClusterAdminPolicy
+  EKSUser:
+    Description: IAM user (eks user)
+    Value: !Ref EKSUser
+  EKSUserArn:
+    Description: Arn of eks user
+    Value: !GetAtt EKSUser.Arn
