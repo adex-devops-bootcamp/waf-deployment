@@ -1,0 +1,86 @@
+name: EKS Infrastructure (Terraform)
+
+on:
+  workflow_dispatch:
+    inputs:
+      working_directory:
+        description: "Terraform working directory (relative to repo root)"
+        required: true
+        default: "eks-terraform"
+      aws_region:
+        description: "AWS region"
+        required: true
+        default: "us-east-1"
+      
+      terraform_user_name:
+        description: "IAM user name for Terraform"
+        required: true
+        default: "terraform-user"
+
+      vpc_name:
+        description: "VPC name"
+        required: true
+        default: "learning-eks-vpc"
+
+      vpc_cidr:
+        description: "VPC CIDR"
+        required: true
+        default: "10.0.0.0/16"
+
+      public_azs:
+        description: "Public AZs (comma-separated) e.g., us-east-1a,us-east-1b"
+        required: true
+        default: "us-east-1a,us-east-1b"
+
+      public_subnets_cidrs:
+        description: "Public subnet CIDRs (comma-separated) e.g., 10.0.1.0/24,10.0.2.0/24"
+        required: true
+        default: "10.0.1.0/24,10.0.2.0/24"
+
+      eks_cluster_name:
+        description: "EKS cluster name"
+        required: true
+        default: "learning-eks"
+
+      node_instance_type:
+        description: "EKS worker node instance type"
+        required: true
+        default: "t3.micro"
+
+    
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ./terraform/envs/${{ inputs.working_directory }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ./terraform/envs/${{ inputs.working_directory }}
+        run: |
+          terraform apply -auto-approve \
+            -var="aws_region=${{ inputs.aws_region }}" \
+            -var="vpc_name=${{ inputs.vpc_name }}" \
+            -var="vpc_cidr=${{ inputs.vpc_cidr }}" \
+            -var='public_azs=["'"$(echo ${{ inputs.public_azs }} | sed 's/,/","/g')"'" ]' \
+            -var='public_subnets_cidrs=["'"$(echo ${{ inputs.public_subnets_cidrs }} | sed 's/,/","/g')"'" ]' \
+            -var="eks_cluster_name=${{ inputs.eks_cluster_name }}" \
+            -var="node_instance_types=[\"${{ inputs.node_instance_type }}\"]" \
+            -var="access_key=${{ secrets.TERRAFORM_USER_ACCESS_KEY_ID }}" \
+            -var="secret_key=${{ secrets.TERRAFORM_USER_SECRET_ACCESS_KEY }}"
+
