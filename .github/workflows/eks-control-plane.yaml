@@ -1,0 +1,100 @@
+name: Terraform Apply (eks control plane)
+
+on:
+  workflow_dispatch:
+    inputs:
+      working_directory:
+        description: "Terraform working directory"
+        required: true
+       
+      aws_region:
+        description: "AWS Region"
+        required: true
+        default: "eu-north-1"
+
+      vpc_cidr:
+        description: "VPC CIDR block"
+        required: true
+        default: "10.0.0.0/16"
+
+      number_of_az:
+        description: "Number of Availability Zones"
+        required: true
+        default: 2
+
+      vpc_azs:
+        description: "List of Availability Zones (List of Strings)"
+        required: true
+        default: '["eu-north-1a", "eu-north-1b"]' 
+
+      number_of_public_subnets:
+        description: "Number of public subnets"
+        required: true
+        default: 2
+
+      public_subnets_cidr_block:
+        description: "Public subnet CIDR blocks (List of Strings)"
+        required: true
+        default: '["10.0.0.0/24", "10.0.1.0/24"]' # Same, needs string
+
+      number_of_private_subnets:
+        description: "Number of private subnets"
+        required: true
+        default: 0
+
+      private_subnets_cidr_block:
+        description: "Private subnet CIDR blocks (JSON array)"
+        required: true   
+        default: '[]' # JSON array must be a string
+
+      cluster_name:
+        description: "Name of eks cluster"
+        required: true
+        default: "tekbay-cluster"
+      
+      eks_version:
+        description: "EKS version"
+        required: true    # fixed typo: was "ture" → true
+        default: "1.31"
+
+      admin_list: 
+        description: "list of arn of admins to get kubectl access"
+        default: '["arn:aws:iam::123456789012:role/admin"]' # JSON string
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Apply
+        working-directory: ./terraform/envs/${{ inputs.working_directory }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CLUSTER_ADMIN_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CLUSTER_ADMIN_AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ inputs.aws_region }}
+
+          TF_VAR_environment: ${{ inputs.working_directory }}
+          TF_VAR_vpc_cidr: ${{ inputs.vpc_cidr }}
+          TF_VAR_number_of_az: ${{ inputs.number_of_az }}
+          TF_VAR_vpc_azs: ${{ inputs.vpc_azs }}
+          TF_VAR_number_of_public_subnets: ${{ inputs.number_of_public_subnets }}
+          TF_VAR_public_subnets_cidr_block: ${{ inputs.public_subnets_cidr_block }}
+          TF_VAR_number_of_private_subnets: ${{ inputs.number_of_private_subnets }}
+          TF_VAR_private_subnets_cidr_block: ${{ inputs.private_subnets_cidr_block }}
+          TF_VAR_tags: '{"Project":"vpc","Environment":"${{ inputs.working_directory }}","ManagedBy":"terraform","Owner":"Security-Team"}'
+          
+          TF_VAR_cluster_name: ${{ inputs.cluster_name }}
+          TF_VAR_eks_version: ${{ inputs.eks_version }}
+          TF_VAR_admin_list: ${{ inputs.admin_list }}
+
+        run: |
+          terraform init
+          terraform validate
+          terraform plan
+          terraform apply -auto-approve
