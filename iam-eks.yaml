@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Terraform IAM user with access key stored in SSM and EKS roles for cluster, nodes, and admin.
+
+Parameters:
+  TerraformUserName:
+    Type: String
+    Default: terraform-user
+    Description: Name of the new IAM user for Terraform
+
+Resources:
+  ######################################
+  # IAM USER (Terraform)
+  ######################################
+  TerraformIamUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref TerraformUserName
+
+  ######################################
+  # IAM POLICY FOR TERRAFORM USER
+  ######################################
+  TerraformUserPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: terraform-basic-permissions
+      Users:
+        - !Ref TerraformIamUser
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # IAM permissions to create roles
+          - Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:AttachRolePolicy
+              - iam:DetachRolePolicy
+              - iam:GetRole
+              - iam:ListAttachedRolePolicies
+              - iam:ListRoles
+              - iam:PassRole
+              - iam:CreateServiceLinkedRole
+            Resource: "*"
+
+          # EKS permission
+          - Effect: Allow
+            Action:
+              - eks:*
+            Resource: "*"
+          # EC2 & VPC (basic)
+          - Effect: Allow
+            Action:
+              - ec2:*
+              - ec2:Describe*
+            Resource: "*"
+
+          # CloudWatch logs
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:DescribeLogGroups
+            Resource: "*"
+
+  ######################################
+  # ACCESS KEY FOR TERRAFORM USER
+  ######################################
+  TerraformUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref TerraformIamUser
+
+  ######################################
+  # STORE ACCESS KEY IN SSM
+  ######################################
+  TerraformUserAccessKeyIdParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /terraform/user/access_key_id
+      Type: "String"
+      Value: !Ref TerraformUserAccessKey
+      Description: Terraform IAM User Access Key ID
+
+  TerraformUserSecretAccessKeyParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /terraform/user/secret_access_key
+      Type: "String"
+      Value: !GetAtt TerraformUserAccessKey.SecretAccessKey
+      Description: Terraform IAM User Secret Access Key
+
+  ######################################
+  # EKS CLUSTER ROLE
+  ######################################
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-cluster-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+  ######################################
+  # EKS NODE ROLE
+  ######################################
+  EKSNodeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-node-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+  ######################################
+  # EKS ADMIN ROLE
+  ######################################
+  EKSAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: eks-admin-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt TerraformIamUser.Arn
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+Outputs:
+  TerraformUserArn:
+    Value: !GetAtt TerraformIamUser.Arn
+    Description: IAM user ARN to run Terraform
+
+  ClusterRoleArn:
+    Value: !GetAtt EKSClusterRole.Arn
+    Description: IAM role for EKS control plane
+
+  NodeRoleArn:
+    Value: !GetAtt EKSNodeRole.Arn
+    Description: IAM role for EKS worker nodes
+
+  AdminRoleArn:
+    Value: !GetAtt EKSAdminRole.Arn
+    Description: IAM role for kubectl access
+
+  TerraformUserAccessKeyIdSSM:
+    Value: /terraform/user/access_key_id
+    Description: SSM Parameter name of Terraform Access Key ID
+
+  TerraformUserSecretAccessKeySSM:
+    Value: /terraform/user/secret_access_key
+    Description: SSM Parameter name of Terraform Secret Access Key

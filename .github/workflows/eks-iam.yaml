@@ -1,0 +1,40 @@
+name: IAM Bootstrap for EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        description: "AWS Region to deploy the IAM stack"
+        required: true
+        type: string
+      terraform_user_name:
+        description: "IAM user name for Terraform"
+        required: true
+        default: "terraform-user"
+        type: string
+
+
+
+jobs:
+  iam:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Deploy IAM CloudFormation stack
+        run: |
+          aws cloudformation deploy \
+            --region ${{ inputs.aws_region }} \
+            --stack-name eks-iam-stack \
+            --template-file iam-eks.yaml \
+            --parameter-overrides TerraformUserName=${{ inputs.terraform_user_name }} \
+            --capabilities CAPABILITY_NAMED_IAM
