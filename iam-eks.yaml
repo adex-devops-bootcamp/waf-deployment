@@ -54,6 +54,15 @@ Resources:
               - ec2:*
               - ec2:Describe*
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - autoscaling:*
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:*
+            Resource: "*"
 
           # CloudWatch logs
           - Effect: Allow
@@ -63,6 +72,15 @@ Resources:
               - logs:PutLogEvents
               - logs:DescribeLogGroups
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource:
+              - arn:aws:s3:::adex-terraform-248628534734u568934547435
+              - arn:aws:s3:::adex-terraform-248628534734u568934547435/*
 
   ######################################
   # ACCESS KEY FOR TERRAFORM USER

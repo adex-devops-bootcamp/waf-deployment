@@ -47,6 +47,26 @@ on:
         required: true
         default: "t3.micro"
 
+      node_desired_size:
+        description: "Desired number of worker nodes"
+        required: true
+        default: "2"
+
+      node_min_size:
+        description: "Minimum number of worker nodes"
+        required: true
+        default: "1"
+
+      node_max_size:
+        description: "Maximum number of worker nodes"
+        required: true
+        default: "5"
+
+      node_capacity_type:
+        description: "Capacity type for node group: ON_DEMAND or SPOT"
+        required: true
+        default: "ON_DEMAND"
+
     
 
 jobs:
@@ -82,5 +102,9 @@ jobs:
             -var="eks_cluster_name=${{ inputs.eks_cluster_name }}" \
             -var="node_instance_types=[\"${{ inputs.node_instance_type }}\"]" \
             -var="access_key=${{ secrets.TERRAFORM_USER_ACCESS_KEY_ID }}" \
-            -var="secret_key=${{ secrets.TERRAFORM_USER_SECRET_ACCESS_KEY }}"
+            -var="secret_key=${{ secrets.TERRAFORM_USER_SECRET_ACCESS_KEY }}" \
+            -var="node_desired_size=${{ inputs.node_desired_size }}" \
+            -var="node_min_size=${{ inputs.node_min_size }}" \
+            -var="node_max_size=${{ inputs.node_max_size }}" \
+            -var="node_capacity_type=${{ inputs.node_capacity_type }}"
 
