@@ -54,6 +54,15 @@ Resources:
               - ec2:*
               - ec2:Describe*
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - autoscaling:*
+            Resource: "*"
+
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:*
+            Resource: "*"
 
           # CloudWatch logs
           - Effect: Allow
