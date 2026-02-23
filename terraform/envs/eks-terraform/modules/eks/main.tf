@@ -23,9 +23,11 @@ resource "aws_eks_cluster" "eks" {
   support_type = "STANDARD"
 }
 
-  vpc_config {
-    subnet_ids = var.public_subnet_ids
-  }
+vpc_config {
+  subnet_ids              = var.private_subnet_ids
+  endpoint_private_access = true
+  endpoint_public_access  = true // Set to true for public access, false for private access only
+}
 
   depends_on = [
     data.aws_iam_role.eks_admin_role
@@ -37,7 +39,7 @@ resource "aws_eks_node_group" "managed_nodes" {
   cluster_name    = aws_eks_cluster.eks.name
   node_group_name = "${var.eks_cluster_name}-nodes"
   node_role_arn   = data.aws_iam_role.eks_node_role.arn
-  subnet_ids      = var.public_subnet_ids
+  subnet_ids      = var.private_subnet_ids
 
   scaling_config {
     desired_size = var.node_desired_size

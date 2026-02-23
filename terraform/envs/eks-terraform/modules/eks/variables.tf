@@ -8,6 +8,11 @@ variable "public_subnet_ids" {
   description = "List of public subnet IDs where the EKS control plane and node group will be deployed."
 }
 
+variable "private_subnet_ids" {
+  type        = list(string)
+  description = "List of private subnet IDs where the EKS control plane and node group will be deployed."
+}
+
 variable "node_instance_types" {
   type        = list(string)
   description = "List of EC2 instance types for the EKS managed node group."

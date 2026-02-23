@@ -81,6 +81,10 @@ Resources:
             Resource:
               - arn:aws:s3:::adex-terraform-248628534734u568934547435
               - arn:aws:s3:::adex-terraform-248628534734u568934547435/*
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:*
+            Resource: "*"
 
   ######################################
   # ACCESS KEY FOR TERRAFORM USER

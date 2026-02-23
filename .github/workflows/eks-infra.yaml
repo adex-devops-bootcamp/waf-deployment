@@ -32,8 +32,18 @@ on:
         required: true
         default: "us-east-1a,us-east-1b"
 
+      private_azs:
+        description: "Private AZs (comma-separated) e.g., us-east-1a,us-east-1b"
+        required: true
+        default: "us-east-1a,us-east-1b"
+
       public_subnets_cidrs:
         description: "Public subnet CIDRs (comma-separated) e.g., 10.0.1.0/24,10.0.2.0/24"
+        required: true
+        default: "10.0.1.0/24,10.0.2.0/24"
+
+      private_subnets_cidrs:
+        description: "Private subnet CIDRs (comma-separated) e.g., 10.0.1.0/24,10.0.2.0/24"
         required: true
         default: "10.0.1.0/24,10.0.2.0/24"
 
@@ -99,6 +109,8 @@ jobs:
             -var="vpc_cidr=${{ inputs.vpc_cidr }}" \
             -var='public_azs=["'"$(echo ${{ inputs.public_azs }} | sed 's/,/","/g')"'" ]' \
             -var='public_subnets_cidrs=["'"$(echo ${{ inputs.public_subnets_cidrs }} | sed 's/,/","/g')"'" ]' \
+            -var='private_azs=["'"$(echo ${{ inputs.private_azs }} | sed 's/,/","/g')"'" ]' \
+            -var='private_subnets_cidrs=["'"$(echo ${{ inputs.private_subnets_cidrs }} | sed 's/,/","/g')"'" ]' \
             -var="eks_cluster_name=${{ inputs.eks_cluster_name }}" \
             -var="node_instance_types=[\"${{ inputs.node_instance_type }}\"]" \
             -var="access_key=${{ secrets.TERRAFORM_USER_ACCESS_KEY_ID }}" \
