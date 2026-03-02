@@ -19,6 +19,16 @@ variable "public_subnets_cidrs" {
   type        = list(string)
 }
 
+variable "private_azs" {
+  description = "AZs for private subnets"
+  type        = list(string)
+}
+
+variable "private_subnets_cidrs" {
+  description = "CIDRs for private subnets"
+  type        = list(string)
+}
+
 # EKS cluster name
 variable "eks_cluster_name" {
   description = "Name of the EKS cluster"
